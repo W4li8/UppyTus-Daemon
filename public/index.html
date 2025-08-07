@@ -139,7 +139,22 @@
         .delete-btn:hover {
             background: #c82333;
         }
-        
+
+        .delete-all-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+
+        .delete-all-btn:hover {
+            background: #c82333;
+        }
+
         .refresh-btn {
             background: #667eea;
             color: white;
@@ -194,7 +209,7 @@
             
             <div class="stats-section">
                 <h2>📊 Upload Statistics</h2>
-                <div style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <button class="refresh-btn" onclick="loadStats()">🔄 Refresh Stats</button>
                     <button class="delete-all-btn" onclick="deleteAllFiles()" style="background: #dc3545; margin-left: 10px;">🗑️ Delete All</button>
                 </div>
@@ -495,7 +510,7 @@
             }
             
             try {
-                const response = await fetch('/api/uploads/delete-all', {
+                const response = await fetch('/api/manage/delete-all', {
                     method: 'DELETE'
                 });
                 

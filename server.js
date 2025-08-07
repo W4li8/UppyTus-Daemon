@@ -222,44 +222,13 @@ app.delete('/api/uploads/:filename', async (req, res) => {
 });
 
 // Delete all uploaded files
-app.delete('/api/uploads/delete-all', async (req, res) => {
+app.delete('/api/manage/delete-all', async (req, res) => {
   try {
-    const files = await fs.readdir(uploadDir);
-    
-    // Filter out TUS metadata files and chunks, only delete actual uploaded files
-    const actualFiles = files.filter(file => {
-      if (file.endsWith('.json')) return false;
-      if (file.includes('.chunk')) return false;
-      if (file.startsWith('.tmp') || file.startsWith('.temp')) return false;
-      return true;
-    });
-    
-    let deletedCount = 0;
-    let deletedMetadata = 0;
-    
-    for (const file of actualFiles) {
-      const filePath = path.join(uploadDir, file);
-      await fs.remove(filePath);
-      console.log('Deleted file:', file);
-      
-      // Delete the associated metadata file (same name + .json)
-      const metadataFile = file + '.json';
-      const metadataPath = path.join(uploadDir, metadataFile);
-      if (await fs.pathExists(metadataPath)) {
-        await fs.remove(metadataPath);
-        deletedMetadata++;
-        console.log('Deleted metadata file:', metadataFile);
-      }
-      
-      deletedCount++;
-    }
-    
-    res.json({ 
-      message: 'All files deleted successfully',
-      deletedFiles: deletedCount,
-      deletedMetadata: deletedMetadata
-    });
+    await fs.remove(uploadDir);         // Delete the uploads folder and all contents
+    await fs.ensureDir(uploadDir);      // Recreate the uploads folder
+    res.json({ message: 'All files deleted successfully' });
   } catch (error) {
+    console.error('Error deleting all files:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
