@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uppy TUS File Upload</title>
+    
+    <!-- Uppy CSS -->
+    <link href="https://releases.transloadit.com/uppy/v3.21.0/uppy.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 300;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .upload-section {
+            margin-bottom: 30px;
+        }
+        
+        .upload-placeholder {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            background: #f9f9f9;
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .stats-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .file-list {
+            margin-top: 20px;
+        }
+        
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .file-info {
+            flex: 1;
+        }
+        
+        .file-name {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .file-details {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .delete-btn:hover {
+            background: #c82333;
+        }
+        
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-bottom: 20px;
+        }
+        
+        .refresh-btn:hover {
+            background: #5a6fd8;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Uppy TUS File Upload</h1>
+            <p>Drag & drop files up to 20GB with resumable uploads</p>
+        </div>
+        
+        <div class="content">
+            <div class="upload-section">
+                <div id="uppy">
+                    <div class="upload-placeholder">
+                        Loading upload interface...
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats-section">
+                <h2>📊 Upload Statistics</h2>
+                <button class="refresh-btn" onclick="loadStats()">🔄 Refresh Stats</button>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalFiles">-</div>
+                        <div class="stat-label">Total Files</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalSize">-</div>
+                        <div class="stat-label">Total Size</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="avgSize">-</div>
+                        <div class="stat-label">Average Size</div>
+                    </div>
+                </div>
+                
+                <div class="file-list" id="fileList">
+                    <div class="loading">Loading files...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Uppy CSS and JS from CDN -->
+    <link href="https://releases.transloadit.com/uppy/v3.21.0/uppy.min.css" rel="stylesheet">
+    <script src="https://releases.transloadit.com/uppy/v3.21.0/uppy.min.js"></script>
+    <script src="https://releases.transloadit.com/uppy/v3.21.0/uppy-dashboard.min.js"></script>
+    <script src="https://releases.transloadit.com/uppy/v3.21.0/uppy-tus.min.js"></script>
+    <script src="https://releases.transloadit.com/uppy/v3.21.0/uppy-progress-bar.min.js"></script>
+    
+    <script>
+        // Simple Uppy initialization
+        window.addEventListener('load', function() {
+            console.log('Page loaded, checking for Uppy...');
+            
+            // Wait a bit for Uppy to load
+            setTimeout(function() {
+                if (typeof Uppy === 'undefined') {
+                    console.error('Uppy not available');
+                    document.getElementById('uppy').innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Error: Uppy failed to load. Please refresh the page.</div>';
+                    return;
+                }
+                
+                console.log('Uppy is available, initializing...');
+                
+                try {
+                    console.log('Uppy object:', Uppy);
+                    console.log('Uppy keys:', Object.keys(Uppy));
+                    
+                    // Try to get the Uppy constructor
+                    let UppyConstructor;
+                    
+                    // Check if Uppy is a function itself
+                    if (typeof Uppy === 'function') {
+                        UppyConstructor = Uppy;
+                        console.log('Using Uppy as function');
+                    }
+                    // Check if it has a default export
+                    else if (Uppy.default && typeof Uppy.default === 'function') {
+                        UppyConstructor = Uppy.default;
+                        console.log('Using Uppy.default');
+                    }
+                    // Check if it has a Uppy property
+                    else if (Uppy.Uppy && typeof Uppy.Uppy === 'function') {
+                        UppyConstructor = Uppy.Uppy;
+                        console.log('Using Uppy.Uppy');
+                    }
+                    // Look for any function that might be the constructor
+                    else {
+                        for (let key in Uppy) {
+                            if (typeof Uppy[key] === 'function') {
+                                console.log('Found function:', key, Uppy[key]);
+                                // Try to use it as constructor
+                                try {
+                                    const testInstance = new Uppy[key]({});
+                                    if (testInstance && typeof testInstance.use === 'function') {
+                                        UppyConstructor = Uppy[key];
+                                        console.log('Using Uppy.' + key);
+                                        break;
+                                    }
+                                } catch (e) {
+                                    console.log('Not a constructor:', key);
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (!UppyConstructor) {
+                        throw new Error('Could not find Uppy constructor. Available keys: ' + Object.keys(Uppy).join(', '));
+                    }
+                    
+                    console.log('Using constructor:', UppyConstructor);
+                    
+                    // Initialize Uppy
+                    const uppy = new UppyConstructor({
+                        restrictions: {
+                            maxFileSize: 20 * 1024 * 1024 * 1024, // 20GB
+                            maxNumberOfFiles: 10,
+                            allowedFileTypes: null
+                        },
+                        autoProceed: false
+                    });
+
+                    console.log('Uppy instance created:', uppy);
+
+                    // Add TUS plugin - check if it's available
+                    if (Uppy.Tus) {
+                        uppy.use(Uppy.Tus, {
+                            endpoint: '/files',
+                            retryDelays: [0, 1000, 3000, 5000],
+                            chunkSize: 6 * 1024 * 1024, // 6MB chunks
+                            limit: 1,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        console.log('TUS plugin added');
+                    } else {
+                        console.log('TUS plugin not available, using basic upload');
+                    }
+
+                    // Add Dashboard plugin - check if it's available
+                    if (Uppy.Dashboard) {
+                        uppy.use(Uppy.Dashboard, {
+                            inline: true,
+                            target: '#uppy',
+                            height: 400,
+                            width: '100%',
+                            proudlyDisplayPoweredByUppy: false,
+                            showProgressDetails: true,
+                            note: 'Files up to 20GB supported with resumable uploads'
+                        });
+                        console.log('Dashboard plugin added');
+                    } else {
+                        console.log('Dashboard plugin not available');
+                        document.getElementById('uppy').innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Dashboard plugin not available</div>';
+                    }
+
+                    // Add Progress Bar plugin - check if it's available
+                    if (Uppy.ProgressBar) {
+                        uppy.use(Uppy.ProgressBar, {
+                            target: 'body',
+                            fixed: true,
+                            hideAfterFinish: false
+                        });
+                        console.log('Progress Bar plugin added');
+                    } else {
+                        console.log('Progress Bar plugin not available');
+                    }
+
+                    // Event listeners
+                    uppy.on('upload-success', (file, response) => {
+                        console.log('Upload successful:', file.name);
+                        loadStats();
+                    });
+
+                    uppy.on('upload-error', (file, error, response) => {
+                        console.error('Upload error:', error);
+                        alert(`Upload failed for ${file.name}: ${error.message}`);
+                    });
+
+                    console.log('Uppy initialized successfully');
+                    
+                } catch (error) {
+                    console.error('Error initializing Uppy:', error);
+                    document.getElementById('uppy').innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Error initializing upload interface: ' + error.message + '</div>';
+                }
+            }, 1000); // Wait 1 second for Uppy to load
+        });
+
+        // Load initial stats
+        loadStats();
+
+        // Function to load upload statistics
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/uploads');
+                const data = await response.json();
+                
+                document.getElementById('totalFiles').textContent = data.totalFiles;
+                document.getElementById('totalSize').textContent = formatBytes(data.totalSize);
+                document.getElementById('avgSize').textContent = data.totalFiles > 0 
+                    ? formatBytes(data.totalSize / data.totalFiles) 
+                    : '0 B';
+                
+                displayFiles(data.files);
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                document.getElementById('fileList').innerHTML = '<div class="loading">Error loading files</div>';
+            }
+        }
+
+        // Function to display files
+        function displayFiles(files) {
+            const fileList = document.getElementById('fileList');
+            
+            if (files.length === 0) {
+                fileList.innerHTML = '<div class="loading">No files uploaded yet</div>';
+                return;
+            }
+            
+            fileList.innerHTML = files.map(file => `
+                <div class="file-item">
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-details">
+                            ${formatBytes(file.size)} • Uploaded ${new Date(file.created).toLocaleDateString()}
+                        </div>
+                    </div>
+                    <button class="delete-btn" onclick="deleteFile('${file.name}')">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        // Function to delete file
+        async function deleteFile(filename) {
+            if (!confirm(`Are you sure you want to delete ${filename}?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/uploads/${encodeURIComponent(filename)}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    loadStats(); // Refresh stats after deletion
+                } else {
+                    const error = await response.json();
+                    alert(`Error deleting file: ${error.error}`);
+                }
+            } catch (error) {
+                console.error('Error deleting file:', error);
+                alert('Error deleting file');
+            }
+        }
+
+        // Function to format bytes
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+    </script>
+</body>
+</html> 
