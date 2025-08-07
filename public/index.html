@@ -318,6 +318,9 @@
 
                     // Add Dashboard plugin - check if it's available
                     if (Uppy.Dashboard) {
+                        // Clear the placeholder first
+                        document.getElementById('uppy').innerHTML = '';
+                        
                         uppy.use(Uppy.Dashboard, {
                             inline: true,
                             target: '#uppy',
@@ -330,7 +333,51 @@
                         console.log('Dashboard plugin added');
                     } else {
                         console.log('Dashboard plugin not available');
-                        document.getElementById('uppy').innerHTML = '<div style="padding: 20px; text-align: center; color: red;">Dashboard plugin not available</div>';
+                        // Create a simple fallback upload interface
+                        document.getElementById('uppy').innerHTML = `
+                            <div style="border: 2px dashed #ccc; border-radius: 8px; padding: 40px; text-align: center; background: #f9f9f9;">
+                                <h3>File Upload</h3>
+                                <p>Drag and drop files here or click to browse</p>
+                                <input type="file" id="fileInput" multiple style="display: none;">
+                                <button onclick="document.getElementById('fileInput').click()" style="background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; margin-top: 10px;">Browse Files</button>
+                                <div id="uploadProgress" style="margin-top: 20px;"></div>
+                            </div>
+                        `;
+                        
+                        // Add drag and drop functionality to the fallback
+                        const dropZone = document.getElementById('uppy');
+                        const fileInput = document.getElementById('fileInput');
+                        
+                        dropZone.addEventListener('dragover', (e) => {
+                            e.preventDefault();
+                            dropZone.style.borderColor = '#667eea';
+                        });
+                        
+                        dropZone.addEventListener('dragleave', (e) => {
+                            e.preventDefault();
+                            dropZone.style.borderColor = '#ccc';
+                        });
+                        
+                        dropZone.addEventListener('drop', (e) => {
+                            e.preventDefault();
+                            dropZone.style.borderColor = '#ccc';
+                            const files = e.dataTransfer.files;
+                            handleFiles(files);
+                        });
+                        
+                        fileInput.addEventListener('change', (e) => {
+                            handleFiles(e.target.files);
+                        });
+                        
+                        function handleFiles(files) {
+                            Array.from(files).forEach(file => {
+                                console.log('Uploading file:', file.name);
+                                // Here you would implement the actual upload logic
+                                // For now, just show that the file was selected
+                                const progressDiv = document.getElementById('uploadProgress');
+                                progressDiv.innerHTML += `<div>Selected: ${file.name} (${(file.size / 1024).toFixed(2)} KB)</div>`;
+                            });
+                        }
                     }
 
                     // Add Progress Bar plugin - check if it's available
