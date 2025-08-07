@@ -194,20 +194,23 @@
             
             <div class="stats-section">
                 <h2>📊 Upload Statistics</h2>
-                <button class="refresh-btn" onclick="loadStats()">🔄 Refresh Stats</button>
+                <div style="margin-bottom: 20px;">
+                    <button class="refresh-btn" onclick="loadStats()">🔄 Refresh Stats</button>
+                    <button class="delete-all-btn" onclick="deleteAllFiles()" style="background: #dc3545; margin-left: 10px;">🗑️ Delete All</button>
+                </div>
                 
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-number" id="totalFiles">-</div>
-                        <div class="stat-label">Total Files</div>
+                        <div class="stat-label">Uploaded Files</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-number" id="totalSize">-</div>
                         <div class="stat-label">Total Size</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-number" id="avgSize">-</div>
-                        <div class="stat-label">Average Size</div>
+                        <div class="stat-number" id="lastUpdate">-</div>
+                        <div class="stat-label">Last Update</div>
                     </div>
                 </div>
                 
@@ -395,7 +398,10 @@
                     // Event listeners
                     uppy.on('upload-success', (file, response) => {
                         console.log('Upload successful:', file.name);
-                        loadStats();
+                        // Wait a moment for the server to rename the file, then refresh
+                        setTimeout(() => {
+                            loadStats();
+                        }, 500);
                     });
 
                     uppy.on('upload-error', (file, error, response) => {
@@ -423,9 +429,9 @@
                 
                 document.getElementById('totalFiles').textContent = data.totalFiles;
                 document.getElementById('totalSize').textContent = formatBytes(data.totalSize);
-                document.getElementById('avgSize').textContent = data.totalFiles > 0 
-                    ? formatBytes(data.totalSize / data.totalFiles) 
-                    : '0 B';
+                document.getElementById('lastUpdate').textContent = data.lastUpdate 
+                    ? new Date(data.lastUpdate).toLocaleDateString() 
+                    : 'Never';
                 
                 displayFiles(data.files);
             } catch (error) {
@@ -448,10 +454,13 @@
                     <div class="file-info">
                         <div class="file-name">${file.name}</div>
                         <div class="file-details">
-                            ${formatBytes(file.size)} • Uploaded ${new Date(file.created).toLocaleDateString()}
+                            ${formatBytes(file.size)} • Last modified ${new Date(file.modified).toLocaleDateString()}
                         </div>
                     </div>
-                    <button class="delete-btn" onclick="deleteFile('${file.name}')">Delete</button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="rename-btn" onclick="renameFile('${file.name}')" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">✏️ Rename</button>
+                        <button class="delete-btn" onclick="deleteFile('${file.name}')">Delete</button>
+                    </div>
                 </div>
             `).join('');
         }
@@ -476,6 +485,60 @@
             } catch (error) {
                 console.error('Error deleting file:', error);
                 alert('Error deleting file');
+            }
+        }
+
+        // Function to delete all files
+        async function deleteAllFiles() {
+            if (!confirm('Are you sure you want to delete ALL uploaded files? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/uploads/delete-all', {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    loadStats(); // Refresh stats after deletion
+                    alert('All files deleted successfully');
+                } else {
+                    const error = await response.json();
+                    alert(`Error deleting all files: ${error.error}`);
+                }
+            } catch (error) {
+                console.error('Error deleting all files:', error);
+                alert('Error deleting all files');
+            }
+        }
+
+        // Function to rename file
+        async function renameFile(filename) {
+            const newName = prompt(`Enter new name for "${filename}":`, filename);
+            
+            if (!newName || newName.trim() === '') {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/uploads/${encodeURIComponent(filename)}/rename`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ newName: newName.trim() })
+                });
+                
+                if (response.ok) {
+                    loadStats(); // Refresh stats after rename
+                    alert('File renamed successfully');
+                } else {
+                    const error = await response.json();
+                    alert(`Error renaming file: ${error.error}`);
+                }
+            } catch (error) {
+                console.error('Error renaming file:', error);
+                alert('Error renaming file');
             }
         }
 
