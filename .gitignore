@@ -1,4 +1,5 @@
 # Uploaded files and TUS metadata
+files/
 uploads/
 *.json
 *.chunk*

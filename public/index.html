@@ -195,7 +195,7 @@
     <div class="container">
         <div class="header">
             <h1>🚀 UppyTus Daemon 🚀</h1>
-            <p>Drag & drop files up to 20GB with resumable uploads</p>
+            <p>Drag & drop files up to 32GB with resumable uploads</p>
         </div>
         
         <div class="content">
@@ -309,7 +309,7 @@
                     // Initialize Uppy
                     const uppy = new UppyConstructor({
                         restrictions: {
-                            maxFileSize: 20 * 1024 * 1024 * 1024, // 20GB
+                            maxFileSize: 32 * 1024 * 1024 * 1024, // 32GB
                             maxNumberOfFiles: 10,
                             allowedFileTypes: null
                         },
@@ -323,7 +323,7 @@
                         uppy.use(Uppy.Tus, {
                             endpoint: '/files',
                             retryDelays: [0, 1000, 3000, 5000],
-                            chunkSize: 6 * 1024 * 1024, // 6MB chunks
+                            chunkSize: 50 * 1024 * 1024, // 50MB chunks
                             limit: 1,
                             headers: {
                                 'X-Requested-With': 'XMLHttpRequest'
@@ -346,7 +346,7 @@
                             width: '100%',
                             proudlyDisplayPoweredByUppy: false,
                             showProgressDetails: true,
-                            note: 'Files up to 20GB supported with resumable uploads'
+                            note: 'Files up to 32GB supported with resumable uploads'
                         });
                         console.log('Dashboard plugin added');
                     } else {
@@ -410,6 +410,23 @@
                         console.log('Progress Bar plugin not available');
                     }
 
+                    uppy.on('file-added', (file) => {
+                        // Store the original filename in Uppy metadata
+                        uppy.setFileMeta(file.id, {
+                            filename: file.name
+                        });
+                    });
+
+                    uppy.on('before-upload', (files) => {
+                    // Ensure every file has filename in metadata
+                    Object.values(files).forEach(file => {
+                        if (!file.meta.filename) {
+                        uppy.setFileMeta(file.id, {
+                            filename: file.name
+                        });
+                        }
+                    });
+                    });
                     // Event listeners
                     uppy.on('upload-success', (file, response) => {
                         console.log('Upload successful:', file.name);
